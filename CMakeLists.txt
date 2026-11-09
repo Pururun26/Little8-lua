@@ -16,7 +16,6 @@ option(L8_RAYLIB_DLL "Link against raylib.dll (import lib) instead of static lib
 set(L8_ROOT   ${CMAKE_CURRENT_SOURCE_DIR})
 set(L8_SRC    ${L8_ROOT}/src)
 set(L8_LUA    ${L8_ROOT}/lua-5.4.9)
-set(L8_RAYLIB ${L8_ROOT}/raylib/raylib-6.0_win64_mingw-w64)
 
 set(LUA_DIR ${L8_LUA})
 
@@ -25,12 +24,24 @@ if(NOT EXISTS ${LUA_DIR}/lapi.c)
 endif()
 
 # ---------------------------------------------------------------------------
+# Raylib — выбираем prebuilt под текущую платформу
+# ---------------------------------------------------------------------------
+if(WIN32)
+    set(L8_RAYLIB ${L8_ROOT}/raylib/raylib-6.0_win64_mingw-w64)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+    set(L8_RAYLIB ${L8_ROOT}/raylib/raylib-6.0_linux_amd64)
+else()
+    message(FATAL_ERROR
+        "No prebuilt raylib for ${CMAKE_SYSTEM_NAME}/${CMAKE_SYSTEM_PROCESSOR}. "
+        "Install raylib manually and set -DL8_RAYLIB=<prefix>.")
+endif()
+
+message(STATUS "raylib root:  ${L8_RAYLIB}")
+
+# ---------------------------------------------------------------------------
 # Lua 5.4 — статическая либа, только нужное.
-# Без lua.c/luac.c (standalone), без linit.c (тянет luaopen_* отовсюду),
-# без loslib/lutf8lib/liolib/ldblib/loadlib.
 # ---------------------------------------------------------------------------
 set(LUA_SOURCES
-    # core
     ${LUA_DIR}/lapi.c
     ${LUA_DIR}/lcode.c
     ${LUA_DIR}/lctype.c
@@ -51,9 +62,7 @@ set(LUA_SOURCES
     ${LUA_DIR}/lundump.c
     ${LUA_DIR}/lvm.c
     ${LUA_DIR}/lzio.c
-    # aux
     ${LUA_DIR}/lauxlib.c
-    # stdlibs we actually open
     ${LUA_DIR}/lbaselib.c
     ${LUA_DIR}/lcorolib.c
     ${LUA_DIR}/lmathlib.c
@@ -121,15 +130,38 @@ target_link_libraries(little8-lua PRIVATE
     lua54
 )
 
+# ---------------------------------------------------------------------------
+# Системные библиотеки — разные для Windows и Linux
+# ---------------------------------------------------------------------------
 if(WIN32)
     # opengl32 — GL-контекст raylib
-    # gdi32    — GetDC/ChoosePixelFormat (обычно уже в дефолтах, но на всякий)
+    # gdi32    — GetDC/ChoosePixelFormat
     # winmm    — timeBeginPeriod/timeEndPeriod (rcore.c)
     target_link_libraries(little8-lua PRIVATE
         opengl32
         gdi32
         winmm
     )
+elseif(UNIX)
+    # m       — libm (математика)
+    # pthread — потоки (raylib их использует)
+    # dl      — dlopen (GLX)
+    # rt      — clock_gettime (на старых glibc)
+    find_package(Threads REQUIRED)
+    target_link_libraries(little8-lua PRIVATE
+        m
+        Threads::Threads
+        dl
+    )
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        # X11 + GL — raylib prebuilt ссылается на них, но не всегда тянет
+        # через .a (зависит от сборки). Явно — надёжнее.
+        find_package(X11 REQUIRED)
+        target_link_libraries(little8-lua PRIVATE
+            X11::X11
+            GL
+        )
+    endif()
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")

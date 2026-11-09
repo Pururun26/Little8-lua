@@ -76,6 +76,7 @@ void little8(void (*callback)(void)) {
     SetTextureFilter(screen, TEXTURE_FILTER_POINT);
 
     while (!WindowShouldClose()) {
+        if (IsKeyPressed(KEY_F11)) ToggleFullscreen();
         if (callback) callback();
         flush_fb();
         UpdateTexture(screen, pixels);
