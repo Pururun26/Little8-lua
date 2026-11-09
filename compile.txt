@@ -1,0 +1,10 @@
+win
+cmake -B build -G "MinGW Makefiles"
+cmake --build build
+build\game.exe
+
+
+linux
+cd /mnt/c/home/pururun/DevConsole/Little-8
+cmake -B build-linux -G "Unix Makefiles"
+cmake --build build-linux -j

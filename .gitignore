@@ -1,0 +1,31 @@
+# Build directories
+build/
+build-linux/
+build-windows/
+
+# raylib: не коммитим симлинки .so и архивы
+# (headers и .a — коммитим, они нужны для сборки)
+raylib/**/*.so
+raylib/**/*.so.*
+raylib/*.tar.gz
+raylib/*.zip
+
+# IDE
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# CMake (генерируемые файлы)
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+!compile.txt
+
+# Binary artifacts (наши собственные, не raylib)
+*.dll
+*.exe
+/liblittle8.dll.a
