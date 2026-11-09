@@ -1,6 +1,6 @@
 # Little8-lua
 
-A small fantasy console built on [Little-8](https://github.com/...), with Lua cartridge scripting. Write one `running()` function in `cart.lua` — Little8-lua handles the window, input, sound, and rendering loop.
+A small fantasy console built on [Little-8](https://github.com/Pururun26/Little-8), with Lua cartridge scripting. Write one `running()` function in `cart.lua` — Little8-lua handles the window, input, sound, and rendering loop.
 
 ```lua
 function running()
